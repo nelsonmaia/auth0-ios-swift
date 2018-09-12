@@ -32,50 +32,100 @@ enum SessionManagerError: Error {
 
 class SessionManager {
     static let shared = SessionManager()
-    let keychain = A0SimpleKeychain(service: "Auth0")
-
+    private let authentication = Auth0.authentication()
+    let credentialsManager: CredentialsManager!
     var profile: UserInfo?
+    var credentials: Credentials?
+    var patchMode: Bool = false
+    
+    private init () {
+         self.credentialsManager = CredentialsManager(authentication: Auth0.authentication())
+    }
 
-    private init () { }
+//    private init () {
+//        self.credentialsManager = CredentialsManager(authentication: Auth0.authentication())
+//        _ = self.authentication.logging(enabled: true) // API Logging
+//    }
 
-    func storeTokens(_ accessToken: String, idToken: String) {
-        self.keychain.setString(accessToken, forKey: "access_token")
-        self.keychain.setString(idToken, forKey: "id_token")
+    // take a loook in credentials where to store it
+    
+//    func store(credentials: Credentials) -> Bool {
+//        self.credentials = credentials
+//        // Store credentials in KeyChain
+//        return self.credentialsManager.store(credentials: credentials)
+//    }
+    
+    @available(*, deprecated)
+    func storeTokens(_ accessToken: String, idToken: String, refreshToken : String) {
+//        self.keychain.setString(accessToken, forKey: "access_token")
+//        self.keychain.setString(idToken, forKey: "id_token")
+//        self.keychain.setString(refreshToken, forKey: "refresh_token")
+        
+       
+    }
+    
+    func store(credentials: Credentials) -> Bool {
+        self.credentials = credentials
+        // Store credentials in KeyChain
+        return self.credentialsManager.store(credentials: credentials)
     }
 
     func retrieveProfile(_ callback: @escaping (Error?) -> ()) {
-        guard let accessToken = self.keychain.string(forKey: "access_token") else {
-            return callback(SessionManagerError.noAccessToken)
-        }
-        Auth0
-            .authentication()
-            .userInfo(withAccessToken: accessToken)
-            .start { result in
-                switch(result) {
-                case .success(let profile):
-                    self.profile = profile
-                    callback(nil)
-                case .failure(let error):
-                    callback(error)
-                }
-        }
+        guard let accessToken = self.credentials?.accessToken
+            else { return callback(CredentialsManagerError.noCredentials) }
+        
+        self.renewAuth{_ in
+            self.authentication
+                .userInfo(withAccessToken: accessToken)
+                .start { result in
+                    switch(result) {
+                    case .success(let profile):
+                        self.profile = profile
+                        callback(nil)
+                    case .failure(let error):
+                        callback(error)
+                    }
+            }
+        }        
     }
+
     
     func userRoles() -> [String]? {
         guard
-            let idToken = self.keychain.string(forKey: "id_token"),
+            let idToken = self.credentials?.idToken,
             let jwt = try? decode(jwt: idToken),
-            let roles = jwt.claim(name: "https://access/roles").array
+            let roles = jwt.claim(name: "https://nmdemo.com/roles").array
             else { return nil }
         
         return roles
     }
 
-    func logout() {
-        self.keychain.clearAll()
+    func logout() -> Bool {
+        // Remove credentials from KeyChain
+        self.credentials = nil
+        return self.credentialsManager.clear()
     }
     
+    func renewAuth(_ callback: @escaping (Error?) -> ()) {
+        // Check it is possible to return credentials before asking for Touch
+        guard self.credentialsManager.hasValid() else {
+            print("has invalid credentials")
+            return callback(CredentialsManagerError.noCredentials)
+        }
+        self.credentialsManager.credentials { error, credentials in
+            guard error == nil, let credentials = credentials else {
+                return callback(error)
+            }
+            self.credentials = credentials
+            print("new credentials set");
+            callback(nil)
+        }
+    }
+    
+    
 }
+
+
 
 func plistValues(bundle: Bundle) -> (clientId: String, domain: String)? {
     guard
