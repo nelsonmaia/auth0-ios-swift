@@ -236,7 +236,7 @@ Congratulations!</string>
         </scene>
     </scenes>
     <resources>
-        <image name="badge" width="256" height="256"/>
+        <image name="badge" width="2000" height="1024"/>
     </resources>
     <inferredMetricsTieBreakers>
         <segue reference="YDz-WT-BJ6"/>

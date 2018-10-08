@@ -30,8 +30,197 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
     
     
+    func application(_ app: UIApplication, open url: URL, options: [UIApplicationOpenURLOptionsKey : Any] = [:]) -> Bool {
+        print("in my method of opening url")
+        
+        
+        
+        
+        let urlComponents = URLComponents(url: url, resolvingAgainstBaseURL: false)
+        
+        var email :String? = nil
+        var code :String? = nil
+        
+        
+        if(urlComponents?.queryItems != nil){
+            let items = (urlComponents?.queryItems)! as [NSURLQueryItem]
+            if (url.scheme == "nmmdemo") {
+                var vcTitle = ""
+                if let _ = items.first, let propertyName = items.first?.name, let propertyValue = items.first?.value {
+                    vcTitle = url.query!//"propertyName"
+                    print(vcTitle)
+                    
+                    
+                }
+                
+                
+                for item in items{
+                        let propertyName = item.name
+                        let propertyValue = item.value
+                    
+                    print(propertyName)
+                    print(propertyValue)
+                    
+                    if(propertyName == "email"){
+                        email = propertyValue
+                    }
+                    
+                    if(propertyName == "code"){
+                        code = propertyValue
+                    }
+                    
+                }
+                
+            }
+            
+        }
+        
+        let verifyRenewToken = DispatchGroup()
+//        verifyRenewToken.enter()
+
+        
+        if(email != nil && code == nil){
+//            Auth0
+//                .authentication()
+//                .startPasswordless(email: email!, type: PasswordlessType.Code, connection: "email")
+//                .start { result in
+//                    switch result {
+//                    case .success:
+//                        print("Sent OTP to " + email!)
+//                    case .failure(let error):
+//                        print(error)
+//                    }
+//            }
+         
+            
+            
+            login(email!, dispatchGroup: verifyRenewToken)
+            
+       // verifyRenewToken.wait()
+
+        
+        
+        
+        }
+        
+        
+        if(code != nil && email != nil){
+            
+            // Auth0.webAuth().parameters(["email":"teste"]);
+            
+            
+//            Auth0
+//                .authentication()
+//                .login(
+//                    usernameOrEmail: email!,
+//                    password: code!,
+//                    realm: "email"
+//                )
+//                .start { result in
+//                    switch result {
+//                    case .success(let credentials):
+//                        print("access_token: \(credentials.accessToken)")
+//                    case .failure(let error):
+//                        print(error)
+//                    }
+//
+//
+//            }
+        }
+        
+        
+        
+        
+//        let id = SessionManager.shared.credentials == nil ? "Home" : "WelcomeNavigation"
+//
+//        self.window = UIWindow(frame: UIScreen.main.bounds)
+//        let mainStoryboard: UIStoryboard = UIStoryboard(name: "Main", bundle: nil)
+//        let exampleVC: UIViewController = mainStoryboard.instantiateViewController(withIdentifier: id) as UIViewController
+//        self.window?.rootViewController = exampleVC
+//        self.window?.makeKeyAndVisible()
+      
+        
+        
+        
+        //guard let clientInfo = plistValues(bundle: Bundle.main) else {  }
+        SessionManager.shared.patchMode = false
+        
+    //    let APIIdentifier = "https://asdasd/api/v2/"
+        
+        
+       
+        
+        
+//        Auth0
+//            .webAuth()
+//           // .audience(APIIdentifier)
+//            .scope("openid profile read:current offline_access read:current_user")
+//            .start {
+//                switch $0 {
+//                case .failure(let error):
+//                    print("Error: \(error)")
+//                case .success(let credentials):
+//                    if(!SessionManager.shared.store(credentials: credentials)) {
+//                        print("Failed to store credentials")
+//                    } else {
+//                        SessionManager.shared.retrieveProfile { error in
+//                            DispatchQueue.main.async {
+//
+//                                //self.performSegue(withIdentifier: "ShowProfileNonAnimated", sender: nil)
+//                            }
+//                        }
+//                    }
+//                }
+//        }
+        
+return Auth0.resumeAuth(url, options: options)
+        
+    }
+    
+    func login(_ email: String, dispatchGroup : DispatchGroup){
+        guard let clientInfo = plistValues(bundle: Bundle.main) else { return  }
+        SessionManager.shared.patchMode = false
+        
+        
+        let APIIdentifier = "https://" + clientInfo.domain + "/api/v2/"
+        
+        Auth0
+            .webAuth()
+            .audience(APIIdentifier)
+            .scope("openid profile read:current offline_access read:current_user")
+            .start {
+                print("is started")
+                switch $0 {
+                case .failure(let error):
+                    print("Error: \(error)")
+                case .success(let credentials):
+                    if(!SessionManager.shared.store(credentials: credentials)) {
+                        print("Failed to store credentials")
+                    } else {
+                        let storyboard = UIStoryboard(name: "Main", bundle: nil);
+                        let viewController: ProfileViewController = storyboard.instantiateViewController(withIdentifier: "Welcome") as! ProfileViewController;
+                        
+                        
+                        
+                        print("view controller is ")
+                        print(viewController)
+                        // Then push that view controller onto the navigation stack
+                        let rootViewController = self.window!.rootViewController as! HomeViewController;
+                        rootViewController.performSegue(withIdentifier: "ShowProfileNonAnimated", sender: nil)
+                    }
+                }
+        }
+        
+        print("entering in waiting stage")
+        
+//        dispatchGroup.wait()
+        
+    }
+    
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
+        
+        
         
         let verifyRenewToken = DispatchGroup()
         verifyRenewToken.enter()
@@ -91,9 +280,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
     }
     
-    func application(_ app: UIApplication, open url: URL, options: [UIApplicationOpenURLOptionsKey : Any]) -> Bool {
-        return Auth0.resumeAuth(url, options: options)
-    }
+
     
     
 }
