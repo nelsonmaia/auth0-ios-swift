@@ -55,8 +55,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 
                 
                 for item in items{
-                        let propertyName = item.name
-                        let propertyValue = item.value
+                    let propertyName = item.name
+                    let propertyValue = item.value
                     
                     print(propertyName)
                     print(propertyValue)
@@ -76,104 +76,80 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         }
         
         let verifyRenewToken = DispatchGroup()
-//        verifyRenewToken.enter()
-
+        //        verifyRenewToken.enter()
+        
         
         if(email != nil && code == nil){
-//            Auth0
-//                .authentication()
-//                .startPasswordless(email: email!, type: PasswordlessType.Code, connection: "email")
-//                .start { result in
-//                    switch result {
-//                    case .success:
-//                        print("Sent OTP to " + email!)
-//                    case .failure(let error):
-//                        print(error)
-//                    }
-//            }
-         
+//                        Auth0
+//                            .authentication()
+//                            .startPasswordless(email: email!, type: PasswordlessType.Code, connection: "email")
+//                            .start { result in
+//                                switch result {
+//                                case .success:
+//                                    print("Sent OTP to " + email!)
+//                                case .failure(let error):
+//                                    print(error)
+//                                }
+//                        }
+            
+            
+            
+           //
+            
             
             
             login(email!, dispatchGroup: verifyRenewToken)
             
-       // verifyRenewToken.wait()
-
-        
-        
-        
+            // verifyRenewToken.wait()
+            
+            
+            
+            
         }
         
         
-        if(code != nil && email != nil){
+        if(code != nil){
+            print("code is not nul, trying to auth")
             
-            // Auth0.webAuth().parameters(["email":"teste"]);
+        
             
-            
-//            Auth0
-//                .authentication()
-//                .login(
-//                    usernameOrEmail: email!,
-//                    password: code!,
-//                    realm: "email"
-//                )
-//                .start { result in
-//                    switch result {
-//                    case .success(let credentials):
-//                        print("access_token: \(credentials.accessToken)")
+//            let clientInfo = plistValues(bundle: Bundle.main)
+//            let APIIdentifier = "https://" + clientInfo!.domain + "/api/v2/"
+//
+//            Auth0.
+//                .webAuth()
+//                .audience(APIIdentifier)
+//                .scope("openid profile read:current offline_access read:current_user")
+//                .connection("email")
+//
+//                .parameters(["verification_code" : code!])
+//                .start {
+//                    print("is started")
+//                    switch $0 {
 //                    case .failure(let error):
-//                        print(error)
-//                    }
+//                        print("Error: \(error)")
+//                    case .success(let credentials):
+//                        if(!SessionManager.shared.store(credentials: credentials)) {
+//                            print("Failed to store credentials")
+//                        } else {
+//                            let storyboard = UIStoryboard(name: "Main", bundle: nil);
+//                            let viewController: ProfileViewController = storyboard.instantiateViewController(withIdentifier: "Welcome") as! ProfileViewController;
 //
 //
-//            }
-        }
-        
-        
-        
-        
-//        let id = SessionManager.shared.credentials == nil ? "Home" : "WelcomeNavigation"
 //
-//        self.window = UIWindow(frame: UIScreen.main.bounds)
-//        let mainStoryboard: UIStoryboard = UIStoryboard(name: "Main", bundle: nil)
-//        let exampleVC: UIViewController = mainStoryboard.instantiateViewController(withIdentifier: id) as UIViewController
-//        self.window?.rootViewController = exampleVC
-//        self.window?.makeKeyAndVisible()
-      
-        
-        
-        
-        //guard let clientInfo = plistValues(bundle: Bundle.main) else {  }
-        SessionManager.shared.patchMode = false
-        
-    //    let APIIdentifier = "https://asdasd/api/v2/"
-        
-        
-       
-        
-        
-//        Auth0
-//            .webAuth()
-//           // .audience(APIIdentifier)
-//            .scope("openid profile read:current offline_access read:current_user")
-//            .start {
-//                switch $0 {
-//                case .failure(let error):
-//                    print("Error: \(error)")
-//                case .success(let credentials):
-//                    if(!SessionManager.shared.store(credentials: credentials)) {
-//                        print("Failed to store credentials")
-//                    } else {
-//                        SessionManager.shared.retrieveProfile { error in
-//                            DispatchQueue.main.async {
-//
-//                                //self.performSegue(withIdentifier: "ShowProfileNonAnimated", sender: nil)
-//                            }
+//                            print("view controller is ")
+//                            print(viewController)
+//                            // Then push that view controller onto the navigation stack
+//                            let rootViewController = self.window!.rootViewController as! HomeViewController;
+//                            rootViewController.performSegue(withIdentifier: "ShowProfileNonAnimated", sender: nil)
 //                        }
 //                    }
-//                }
-//        }
+//            }
+            
+        }
         
-return Auth0.resumeAuth(url, options: options)
+        
+        return Auth0.resumeAuth(url, options: options)
         
     }
     
@@ -188,6 +164,8 @@ return Auth0.resumeAuth(url, options: options)
             .webAuth()
             .audience(APIIdentifier)
             .scope("openid profile read:current offline_access read:current_user")
+            .parameters(["email" : email])
+            //.connection("email")
             .start {
                 print("is started")
                 switch $0 {
@@ -197,23 +175,36 @@ return Auth0.resumeAuth(url, options: options)
                     if(!SessionManager.shared.store(credentials: credentials)) {
                         print("Failed to store credentials")
                     } else {
-                        let storyboard = UIStoryboard(name: "Main", bundle: nil);
-                        let viewController: ProfileViewController = storyboard.instantiateViewController(withIdentifier: "Welcome") as! ProfileViewController;
                         
                         
                         
-                        print("view controller is ")
-                        print(viewController)
-                        // Then push that view controller onto the navigation stack
-                        let rootViewController = self.window!.rootViewController as! HomeViewController;
-                        rootViewController.performSegue(withIdentifier: "ShowProfileNonAnimated", sender: nil)
+                        if(!SessionManager.shared.store(credentials: credentials)) {
+                            print("Failed to store credentials")
+                        } else {
+                            SessionManager.shared.retrieveProfile { error in
+                                DispatchQueue.main.async {
+                                   
+                                    let storyboard = UIStoryboard(name: "Main", bundle: nil);
+                                    let viewController: ProfileViewController = storyboard.instantiateViewController(withIdentifier: "Welcome") as! ProfileViewController;
+                                    
+                                    
+                                    
+                                    print("view controller is ")
+                                    print(viewController)
+                                    // Then push that view controller onto the navigation stack
+                                    let rootViewController = self.window!.rootViewController as! HomeViewController;
+                                    rootViewController.performSegue(withIdentifier: "ShowProfileNonAnimated", sender: nil)
+                                }
+                            }
+                        }
+                        
+                        
+                       
                     }
                 }
         }
         
-        print("entering in waiting stage")
         
-//        dispatchGroup.wait()
         
     }
     
@@ -270,17 +261,17 @@ return Auth0.resumeAuth(url, options: options)
         // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
     }
     
-
+    
     func applicationDidBecomeActive(_ application: UIApplication) {
         // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
     }
-
+    
     
     func applicationWillTerminate(_ application: UIApplication) {
         // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
     }
     
-
+    
     
     
 }
